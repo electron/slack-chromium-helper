@@ -41,6 +41,7 @@ async function handleChromiumLink(teamId, event, token) {
     const { project, subject, owner, labels, current_revision, revisions } = details;
     const commit = revisions[current_revision].commit;
     const { message, author: { date } } = commit;
+    const messageWithoutSubject = message.startsWith(subject) ? message.substr(subject.length + 1).trim() : message;
 
     const unfurl = await fetch('https://slack.com/api/chat.unfurl', {
       method: 'POST',
@@ -62,7 +63,7 @@ async function handleChromiumLink(teamId, event, token) {
             title: `#${cl} ${subject}`,
             title_link: url,
             footer_icon: 'https://chromium-review.googlesource.com/favicon.ico',
-            text: message,
+            text: messageWithoutSubject,
             footer: `<https://source.chromium.org/chromium/${niceRepo}|${niceRepo}>`,
             ts: (new Date(date)).getTime(),
             // TODO: Labels? CQ status?

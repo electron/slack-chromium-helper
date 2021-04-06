@@ -26,10 +26,16 @@ async function getFileContents(grimoire, parent, project, projectKey, branch, fi
   });
   const data = JSON.parse(await response.text());
 
+  const best = { str: '', n: 0 };
+
   function search(arr) {
     for (const item of arr) {
       if (typeof item === 'string') {
-        if (item.includes('All rights reserved.') || item.includes('#includes')) return item;
+        const n = item.split('\n').length;
+        if (n > best.n) {
+          best.str = item;
+          best.n = n;
+        }
       } else if (Array.isArray(item)) {
         const result = search(item);
         if (result) return result;
@@ -38,8 +44,8 @@ async function getFileContents(grimoire, parent, project, projectKey, branch, fi
     return null;
   }
 
-  const contents = search(data);
-  return contents;
+  search(data);
+  return best.str;
 }
 
 const MAX_SLACK_MSG_LENGTH = 7000;

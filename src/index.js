@@ -1,7 +1,8 @@
 const express = require('express');
 
-const handleChromiumReviewUnfurl = require('./chromium-review.js');
+const handleChromiumReviewUnfurl = require('./chromium-review');
 const handleChromiumBugUnfurl = require('./crbug');
+const handleChromiumSourceUnfurl = require('./crsource');
 
 const app = express();
 app.use(require('body-parser').json());
@@ -32,4 +33,5 @@ async function handleChromiumLink(teamId, event, token) {
   const url = links[0].url;
   if (await handleChromiumReviewUnfurl(url, message_ts, channel)) return;
   if (await handleChromiumBugUnfurl(url, message_ts, channel)) return;
+  if (await handleChromiumSourceUnfurl(url, message_ts, channel)) return;
 }

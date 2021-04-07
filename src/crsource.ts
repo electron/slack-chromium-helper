@@ -68,6 +68,14 @@ async function getFileContents(
 
   const best = { str: '', n: 0 };
 
+  /**
+   * This is a truly terrible huristic to parse an otherwise constantly
+   * changing data structure
+   *
+   * We assume the "file contents" is the string somewhere in this deeply
+   * nested array that has the most line breaks.  This is statistically
+   * accurate but Feels Bad :tm:
+   */
   function search(arr: DeepArrayOfUnknowns) {
     for (const item of arr) {
       if (typeof item === 'string') {
@@ -88,6 +96,8 @@ async function getFileContents(
 
 const MAX_SLACK_MSG_LENGTH = 7000;
 
+// Slack messages have a max length, Chromium source code does not
+// You see the problem :)
 function maybeTruncate(longContents: string) {
   if (longContents.length <= MAX_SLACK_MSG_LENGTH) return longContents;
   return longContents.slice(0, MAX_SLACK_MSG_LENGTH) + '...';
@@ -103,6 +113,12 @@ function indentLength(line: string): number {
   return i;
 }
 
+/**
+ * This method removes consistent indenting from the front of a subset
+ * of source code.  i.e. if all code is indented by at least 10 spaces
+ * we will remove 10 spaces from the start of every line to ensure that
+ * the code looks reasonable in Slack.
+ */
 function removeOverIndent(contents: string): string {
   const lines = contents.split('\n');
   if (!lines.length) return contents;

@@ -2,6 +2,7 @@ import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
 import { Policy, ConstantBackoff } from 'cockatiel';
+import { notNull } from './utils';
 
 function parseBugIdentifier(url: string) {
   const parsed = new URL(url);
@@ -78,10 +79,6 @@ type MonorailIssue = {
 type MonorailComments = {
   content: string;
 }[];
-
-const notNull = <T>(arr: (T | null)[]) => {
-  return arr.filter(Boolean) as T[];
-};
 
 export async function handleChromiumBugUnfurl(url: string): Promise<MessageAttachment | null> {
   const bugIdentifier = parseBugIdentifier(url);

@@ -3,6 +3,7 @@ import { App, MessageAttachment } from '@slack/bolt';
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
+import { notNull } from './utils';
 
 const app = new App({
   authorize: async () => ({
@@ -28,7 +29,7 @@ app.event('link_shared', async ({ client, body }) => {
         handleChromiumBugUnfurl(url),
         handleChromiumSourceUnfurl(url),
       ]);
-      const validUnfurls = unfurls.filter((unfurl) => !!unfurl) as MessageAttachment[];
+      const validUnfurls = notNull(unfurls);
       if (validUnfurls.length > 1) {
         console.error('More than one unfurler responded to a given URL', { url });
       } else if (validUnfurls.length === 1) {

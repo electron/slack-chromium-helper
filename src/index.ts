@@ -1,8 +1,8 @@
-const express = require('express');
+import * as express from 'express';
 
-const handleChromiumReviewUnfurl = require('./chromium-review');
-const handleChromiumBugUnfurl = require('./crbug');
-const handleChromiumSourceUnfurl = require('./crsource');
+import { handleChromiumReviewUnfurl } from './chromium-review';
+import { handleChromiumBugUnfurl } from './crbug';
+import { handleChromiumSourceUnfurl } from './crsource';
 
 const app = express();
 app.use(require('body-parser').json());
@@ -12,8 +12,8 @@ app.post('/slack-event', (req, res) => {
   if (type === 'url_verification') {
     return res.send(req.body.challenge);
   } else if (type === 'event_callback') {
-    const { team_id, event, token } = req.body;
-    handleChromiumLink(team_id, event, token).catch(console.error);
+    const { team_id, event } = req.body;
+    handleChromiumLink(team_id, event).catch(console.error);
     res.send('');
   } else {
     res.send('');
@@ -24,7 +24,14 @@ app.listen(process.env.PORT || 8080, () => {
   console.log('App listening');
 });
 
-async function handleChromiumLink(teamId, event, token) {
+type SlackEvent = {
+  message_ts: string;
+  type: string;
+  channel: string;
+  links: { url: string }[];
+};
+
+async function handleChromiumLink(teamId: string, event: SlackEvent) {
   if (event.type !== 'link_shared') return;
 
   const { message_ts, channel, links } = event;

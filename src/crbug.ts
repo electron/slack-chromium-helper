@@ -1,12 +1,12 @@
-const fetch = require('node-fetch').default;
+import fetch from 'node-fetch';
 
-const { Policy, ConstantBackoff } = require('cockatiel');
+import { Policy, ConstantBackoff } from 'cockatiel';
 
-function parseBugIdentifier(url) {
+function parseBugIdentifier(url: string) {
   const parsed = new URL(url);
   if (parsed.host === 'bugs.chromium.org') {
     // https://bugs.chromium.org/p/chromium/issues/detail?id=1195924
-    const number = parseInt(parsed.searchParams.get('id'), 10);
+    const number = parseInt(parsed.searchParams.get('id') || '', 10);
     if (isNaN(number)) return null;
 
     const match = /^https:\/\/bugs\.chromium\.org\/p\/([a-z0-9]+)\/issues\/detail/g.exec(url);
@@ -15,7 +15,7 @@ function parseBugIdentifier(url) {
     return {
       project: match[1],
       number,
-    }
+    };
   } else if (parsed.host === 'crbug.com') {
     // https://crbug.com/12345
     const number = parseInt(parsed.pathname.slice(1), 10);
@@ -30,10 +30,7 @@ function parseBugIdentifier(url) {
   return null;
 }
 
-const retry = Policy.handleAll()
-  .retry()
-  .attempts(3)
-  .backoff(new ConstantBackoff(250));
+const retry = Policy.handleAll().retry().attempts(3).backoff(new ConstantBackoff(250));
 
 async function getMonorailToken() {
   return retry.execute(async () => {
@@ -52,13 +49,36 @@ async function getMonorailToken() {
 
 async function getMonorailHeaders() {
   return {
-    "accept": "application/json",
-    "content-type": "application/json",
-    "x-xsrf-token": await getMonorailToken()
-  }
+    accept: 'application/json',
+    'content-type': 'application/json',
+    'x-xsrf-token': await getMonorailToken(),
+  };
 }
 
-module.exports = async function handleChromiumBugUnfurl(url, message_ts, channel) {
+type MonorailIssue = {
+  statusRef: {
+    meansOpen: boolean;
+  };
+  reporterRef: {
+    displayName: string;
+    userId: number;
+  };
+  projectName: string;
+  localId: number;
+  summary: string;
+  openedTimestamp: number;
+  componentRefs?: {
+    path: string;
+  }[];
+  labelRefs?: {
+    label: string;
+  }[];
+};
+type MonorailComments = {
+  content: string;
+}[];
+
+export async function handleChromiumBugUnfurl(url: string, message_ts: string, channel: string) {
   const bugIdentifier = parseBugIdentifier(url);
   if (!bugIdentifier) return false;
 
@@ -77,18 +97,20 @@ module.exports = async function handleChromiumBugUnfurl(url, message_ts, channel
   const commentResponse = fetch('https://bugs.chromium.org/prpc/monorail.Issues/ListComments', {
     method: 'POST',
     headers,
-    body: monorailQuery
-  })
+    body: monorailQuery,
+  });
   if ((await response).status !== 200) return false;
   if ((await commentResponse).status !== 200) return false;
 
-  const { issue } = JSON.parse((await (await response).text()).slice(4));
-  const { comments } = JSON.parse((await (await commentResponse).text()).slice(4));
-  
+  const { issue }: { issue: MonorailIssue } = JSON.parse((await (await response).text()).slice(4));
+  const { comments }: { comments: MonorailComments } = JSON.parse(
+    (await (await commentResponse).text()).slice(4),
+  );
+
   const unfurl = await fetch('https://slack.com/api/chat.unfurl', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
+      Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -107,22 +129,46 @@ module.exports = async function handleChromiumBugUnfurl(url, message_ts, channel
           text: comments[0].content,
           footer: `<https://bugs.chromium.org/p/${issue.projectName}|crbug/${issue.projectName}>`,
           ts: issue.openedTimestamp * 1000,
-          fields: [issue.componentRefs && issue.componentRefs.length ? {
-            title: 'Components',
-            value: issue.componentRefs.map(ref => `• <https://bugs.chromium.org/p/${issue.projectName}/issues/list?q=component%3A${encodeURIComponent(ref.path)}|\`${ref.path.replace(/>/g, '→')}\`>`).join('\n'),
-            short: true,
-          } : null, issue.labelRefs && issue.labelRefs.length ? {
-            title: 'Labels',
-            value: issue.labelRefs.map(ref => `• <https://bugs.chromium.org/p/${issue.projectName}/issues/list?q=label%3A${encodeURIComponent(ref.label)}|\`${ref.label}\`>`).join('\n'),
-            short: true,
-          } : null, {
-            title: 'Comments',
-            value: `${comments.length}`,
-            short: true,
-          }].filter(Boolean)
-        }
-      }
-    })
+          fields: [
+            issue.componentRefs && issue.componentRefs.length
+              ? {
+                  title: 'Components',
+                  value: issue.componentRefs
+                    .map(
+                      (ref) =>
+                        `• <https://bugs.chromium.org/p/${
+                          issue.projectName
+                        }/issues/list?q=component%3A${encodeURIComponent(
+                          ref.path,
+                        )}|\`${ref.path.replace(/>/g, '→')}\`>`,
+                    )
+                    .join('\n'),
+                  short: true,
+                }
+              : null,
+            issue.labelRefs && issue.labelRefs.length
+              ? {
+                  title: 'Labels',
+                  value: issue.labelRefs
+                    .map(
+                      (ref) =>
+                        `• <https://bugs.chromium.org/p/${
+                          issue.projectName
+                        }/issues/list?q=label%3A${encodeURIComponent(ref.label)}|\`${ref.label}\`>`,
+                    )
+                    .join('\n'),
+                  short: true,
+                }
+              : null,
+            {
+              title: 'Comments',
+              value: `${comments.length}`,
+              short: true,
+            },
+          ].filter(Boolean),
+        },
+      },
+    }),
   });
   if (unfurl.status === 200) {
     const resp = await unfurl.json();
@@ -130,6 +176,6 @@ module.exports = async function handleChromiumBugUnfurl(url, message_ts, channel
       console.error('Failed to unfurl', resp);
     }
   }
-  
+
   return true;
 }

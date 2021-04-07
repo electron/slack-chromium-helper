@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "lib": [
+      "es2017",
+      "dom"
+    ],
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "dist",
+    "types": [
+      "node"
+    ],
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node",
+    "incremental": true
+  },
+  "include": [
+    "src"
+  ]
+}

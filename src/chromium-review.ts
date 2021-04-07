@@ -1,7 +1,9 @@
-const fetch = require('node-fetch').default;
+import fetch from 'node-fetch';
 
-module.exports = async function handleChromiumReviewUnfurl(url, message_ts, channel) {
-  const match = /^https:\/\/chromium-review\.googlesource\.com\/c\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([0-9]+)/g.exec(url);
+export async function handleChromiumReviewUnfurl(url: string, message_ts: string, channel: string) {
+  const match = /^https:\/\/chromium-review\.googlesource\.com\/c\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([0-9]+)/g.exec(
+    url,
+  );
   if (match) {
     const repo = `${match[1]}%2F${match[2]}`;
     const niceRepo = `${match[1]}/${match[2]}`;
@@ -13,13 +15,18 @@ module.exports = async function handleChromiumReviewUnfurl(url, message_ts, chan
     const details = JSON.parse(detailsText.substr(4));
     const { project, subject, owner, labels, current_revision, revisions } = details;
     const commit = revisions[current_revision].commit;
-    const { message, author: { date } } = commit;
-    const messageWithoutSubject = message.startsWith(subject) ? message.substr(subject.length + 1).trim() : message;
+    const {
+      message,
+      author: { date },
+    } = commit;
+    const messageWithoutSubject = message.startsWith(subject)
+      ? message.substr(subject.length + 1).trim()
+      : message;
 
     const unfurl = await fetch('https://slack.com/api/chat.unfurl', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SLACK_TOKEN}`,
+        Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -30,22 +37,27 @@ module.exports = async function handleChromiumReviewUnfurl(url, message_ts, chan
           [url]: {
             color: '#4D394B',
             author_name: owner.name,
-            author_icon: owner.avatars && owner.avatars.length ? owner.avatars[owner.avatars.length - 1].url : ':void',
-            author_link: `https://chromium-review.googlesource.com/q/author:${encodeURIComponent(owner.email)}`,
+            author_icon:
+              owner.avatars && owner.avatars.length
+                ? owner.avatars[owner.avatars.length - 1].url
+                : ':void',
+            author_link: `https://chromium-review.googlesource.com/q/author:${encodeURIComponent(
+              owner.email,
+            )}`,
             fallback: `[${niceRepo}] #${cl} ${subject}`,
             title: `#${cl} ${subject}`,
             title_link: url,
             footer_icon: 'https://chromium-review.googlesource.com/favicon.ico',
             text: messageWithoutSubject,
             footer: `<https://source.chromium.org/chromium/${niceRepo}|${niceRepo}>`,
-            ts: (new Date(date)).getTime(),
+            ts: new Date(date).getTime(),
             // TODO: Labels? CQ status?
             // fields: [{
-              
+
             // }]
-          }
-        }
-      })
+          },
+        },
+      }),
     });
     if (unfurl.status === 200) {
       const resp = await unfurl.json();

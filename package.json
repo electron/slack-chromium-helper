@@ -1,8 +1,9 @@
 {
-  "name": "chromium-bot",
+  "name": "@electron/chromium-helper",
   "version": "1.0.0",
   "main": "dist/index.js",
   "license": "MIT",
+  "private": true,
   "dependencies": {
     "@slack/bolt": "^3.3.0",
     "cockatiel": "^2.0.1",

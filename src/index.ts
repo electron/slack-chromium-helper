@@ -1,44 +1,27 @@
-import * as express from 'express';
+import { App } from '@slack/bolt';
 
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
 
-const app = express();
-app.use(require('body-parser').json());
+const app = new App({
+  token: process.env.SLACK_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+});
 
-app.post('/slack-event', (req, res) => {
-  const type = req.body.type;
-  if (type === 'url_verification') {
-    return res.send(req.body.challenge);
-  } else if (type === 'event_callback') {
-    const { team_id, event } = req.body;
-    handleChromiumLink(team_id, event).catch(console.error);
-    res.send('');
-  } else {
-    res.send('');
+app.event('link_shared', async ({ client, body }) => {
+  const { message_ts, channel, links } = body.event;
+
+  // Do not unfurl if there are more than three links, we're nice like that
+  if (links.length > 3) return;
+
+  for (const { url } of links) {
+    if (await handleChromiumReviewUnfurl(url, message_ts, channel, client)) return;
+    if (await handleChromiumBugUnfurl(url, message_ts, channel, client)) return;
+    if (await handleChromiumSourceUnfurl(url, message_ts, channel, client)) return;
   }
 });
 
-app.listen(process.env.PORT || 8080, () => {
-  console.log('App listening');
+app.start(process.env.PORT ? parseInt(process.env.PORT, 10) : 8080).then(() => {
+  console.log('Chromium Unfurler listening...');
 });
-
-type SlackEvent = {
-  message_ts: string;
-  type: string;
-  channel: string;
-  links: { url: string }[];
-};
-
-async function handleChromiumLink(teamId: string, event: SlackEvent) {
-  if (event.type !== 'link_shared') return;
-
-  const { message_ts, channel, links } = event;
-  if (!links || !links.length) return;
-
-  const url = links[0].url;
-  if (await handleChromiumReviewUnfurl(url, message_ts, channel)) return;
-  if (await handleChromiumBugUnfurl(url, message_ts, channel)) return;
-  if (await handleChromiumSourceUnfurl(url, message_ts, channel)) return;
-}

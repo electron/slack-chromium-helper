@@ -1,3 +1,4 @@
+import { WebClient } from '@slack/web-api';
 import fetch from 'node-fetch';
 
 type GrimoireMeta = {
@@ -116,7 +117,12 @@ function removeOverIndent(contents: string): string {
   return lines.map((l) => l.slice(minIndent)).join('\n');
 }
 
-export async function handleChromiumSourceUnfurl(url: string, message_ts: string, channel: string) {
+export async function handleChromiumSourceUnfurl(
+  url: string,
+  message_ts: string,
+  channel: string,
+  client: WebClient,
+) {
   const parsed = new URL(url);
   if (parsed.hostname !== 'source.chromium.org') return false;
 
@@ -142,34 +148,24 @@ export async function handleChromiumSourceUnfurl(url: string, message_ts: string
     }
   }
 
-  const unfurl = await fetch('https://slack.com/api/chat.unfurl', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.SLACK_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      channel,
-      ts: message_ts,
-      unfurls: {
-        [url]: {
-          color: '#00B8D9',
-          fallback: `[${project}/${projectKey}] ${fileName}`,
-          title: fileName,
-          title_link: url,
-          footer_icon: 'https://www.gstatic.com/devopsconsole/images/oss/favicons/oss-96x96.png',
-          text: `\`\`\`\n${maybeTruncate(contents)}\n\`\`\``,
-          footer: `<https://source.chromium.org/${parent}/${project}/${projectKey}/+/${branch}|${project}/${projectKey}>`,
-          mrkdwn_in: ['text'],
-        },
+  const unfurl = await client.chat.unfurl({
+    channel,
+    ts: message_ts,
+    unfurls: {
+      [url]: {
+        color: '#00B8D9',
+        fallback: `[${project}/${projectKey}] ${fileName}`,
+        title: fileName,
+        title_link: url,
+        footer_icon: 'https://www.gstatic.com/devopsconsole/images/oss/favicons/oss-96x96.png',
+        text: `\`\`\`\n${maybeTruncate(contents)}\n\`\`\``,
+        footer: `<https://source.chromium.org/${parent}/${project}/${projectKey}/+/${branch}|${project}/${projectKey}>`,
+        mrkdwn_in: ['text'],
       },
-    }),
+    },
   });
-  if (unfurl.status === 200) {
-    const resp = await unfurl.json();
-    if (!resp.ok) {
-      console.error('Failed to unfurl', resp);
-    }
+  if (unfurl.status !== 200 || !unfurl.ok) {
+    console.error('Failed to unfurl', unfurl);
   }
 
   return true;

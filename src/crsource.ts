@@ -1,4 +1,4 @@
-import { WebClient } from '@slack/web-api';
+import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
 type GrimoireMeta = {
@@ -117,19 +117,14 @@ function removeOverIndent(contents: string): string {
   return lines.map((l) => l.slice(minIndent)).join('\n');
 }
 
-export async function handleChromiumSourceUnfurl(
-  url: string,
-  message_ts: string,
-  channel: string,
-  client: WebClient,
-) {
+export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAttachment | null> {
   const parsed = new URL(url);
-  if (parsed.hostname !== 'source.chromium.org') return false;
+  if (parsed.hostname !== 'source.chromium.org') return null;
 
   const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)(?:;l=([0-9]+(?:-[0-9]+)?))?/.exec(
     url,
   );
-  if (!match) return false;
+  if (!match) return null;
 
   const [, parent, project, projectKey, branch, fileName, lineRange] = match;
 
@@ -148,25 +143,14 @@ export async function handleChromiumSourceUnfurl(
     }
   }
 
-  const unfurl = await client.chat.unfurl({
-    channel,
-    ts: message_ts,
-    unfurls: {
-      [url]: {
-        color: '#00B8D9',
-        fallback: `[${project}/${projectKey}] ${fileName}`,
-        title: fileName,
-        title_link: url,
-        footer_icon: 'https://www.gstatic.com/devopsconsole/images/oss/favicons/oss-96x96.png',
-        text: `\`\`\`\n${maybeTruncate(contents)}\n\`\`\``,
-        footer: `<https://source.chromium.org/${parent}/${project}/${projectKey}/+/${branch}|${project}/${projectKey}>`,
-        mrkdwn_in: ['text'],
-      },
-    },
-  });
-  if (unfurl.status !== 200 || !unfurl.ok) {
-    console.error('Failed to unfurl', unfurl);
-  }
-
-  return true;
+  return {
+    color: '#00B8D9',
+    fallback: `[${project}/${projectKey}] ${fileName}`,
+    title: fileName,
+    title_link: url,
+    footer_icon: 'https://www.gstatic.com/devopsconsole/images/oss/favicons/oss-96x96.png',
+    text: `\`\`\`\n${maybeTruncate(contents)}\n\`\`\``,
+    footer: `<https://source.chromium.org/${parent}/${project}/${projectKey}/+/${branch}|${project}/${projectKey}>`,
+    mrkdwn_in: ['text'],
+  };
 }

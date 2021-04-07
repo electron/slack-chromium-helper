@@ -1,13 +1,15 @@
-import { App } from '@slack/bolt';
+import { App, MessageAttachment } from '@slack/bolt';
 
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
 
 const app = new App({
-  token: process.env.SLACK_TOKEN,
+  authorize: async () => ({
+    botToken: process.env.SLACK_TOKEN,
+    botId: process.env.SLACK_BOT_ID,
+  }),
   signingSecret: process.env.SLACK_SIGNING_SECRET,
-  botId: process.env.SLACK_BOT_ID,
 });
 
 app.event('link_shared', async ({ client, body }) => {
@@ -16,13 +18,36 @@ app.event('link_shared', async ({ client, body }) => {
   // Do not unfurl if there are more than three links, we're nice like that
   if (links.length > 3) return;
 
-  for (const { url } of links) {
-    if (await handleChromiumReviewUnfurl(url, message_ts, channel, client)) return;
-    if (await handleChromiumBugUnfurl(url, message_ts, channel, client)) return;
-    if (await handleChromiumSourceUnfurl(url, message_ts, channel, client)) return;
+  const linkUnfurls: Record<string, MessageAttachment> = {};
+
+  // Unfurl all the links at the same time
+  await Promise.all(
+    links.map(async ({ url }) => {
+      const unfurls = await Promise.all([
+        handleChromiumReviewUnfurl(url),
+        handleChromiumBugUnfurl(url),
+        handleChromiumSourceUnfurl(url),
+      ]);
+      const validUnfurls = unfurls.filter((unfurl) => !!unfurl) as MessageAttachment[];
+      if (validUnfurls.length > 1) {
+        console.error('More than one unfurler responded to a given URL', { url });
+      } else if (validUnfurls.length === 1) {
+        linkUnfurls[url] = validUnfurls[0];
+      }
+    }),
+  );
+
+  const unfurl = await client.chat.unfurl({
+    channel,
+    ts: message_ts,
+    unfurls: linkUnfurls,
+  });
+
+  if (!unfurl.ok) {
+    console.error('Failed to unfurl', { unfurl, linkUnfurls });
   }
 });
 
-app.start(process.env.PORT ? parseInt(process.env.PORT, 10) : 8080).then(() => {
+app.start(process.env.PORT ? parseInt(process.env.PORT, 10) : 8080).then((server) => {
   console.log('Chromium Unfurler listening...');
 });

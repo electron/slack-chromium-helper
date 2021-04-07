@@ -1,12 +1,7 @@
-import { WebClient } from '@slack/web-api';
+import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
-export async function handleChromiumReviewUnfurl(
-  url: string,
-  message_ts: string,
-  channel: string,
-  client: WebClient,
-) {
+export async function handleChromiumReviewUnfurl(url: string): Promise<MessageAttachment | null> {
   const match = /^https:\/\/chromium-review\.googlesource\.com\/c\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([0-9]+)/g.exec(
     url,
   );
@@ -29,39 +24,29 @@ export async function handleChromiumReviewUnfurl(
       ? message.substr(subject.length + 1).trim()
       : message;
 
-    const unfurl = await client.chat.unfurl({
-      channel,
-      ts: message_ts,
-      unfurls: {
-        [url]: {
-          color: '#4D394B',
-          author_name: owner.name,
-          author_icon:
-            owner.avatars && owner.avatars.length
-              ? owner.avatars[owner.avatars.length - 1].url
-              : ':void',
-          author_link: `https://chromium-review.googlesource.com/q/author:${encodeURIComponent(
-            owner.email,
-          )}`,
-          fallback: `[${niceRepo}] #${cl} ${subject}`,
-          title: `#${cl} ${subject}`,
-          title_link: url,
-          footer_icon: 'https://chromium-review.googlesource.com/favicon.ico',
-          text: messageWithoutSubject,
-          footer: `<https://source.chromium.org/chromium/${niceRepo}|${niceRepo}>`,
-          ts: `${new Date(date).getTime()}`,
-          // TODO: Labels? CQ status?
-          // fields: [{
+    return {
+      color: '#4D394B',
+      author_name: owner.name,
+      author_icon:
+        owner.avatars && owner.avatars.length
+          ? owner.avatars[owner.avatars.length - 1].url
+          : ':void',
+      author_link: `https://chromium-review.googlesource.com/q/author:${encodeURIComponent(
+        owner.email,
+      )}`,
+      fallback: `[${niceRepo}] #${cl} ${subject}`,
+      title: `#${cl} ${subject}`,
+      title_link: url,
+      footer_icon: 'https://chromium-review.googlesource.com/favicon.ico',
+      text: messageWithoutSubject,
+      footer: `<https://source.chromium.org/chromium/${niceRepo}|${niceRepo}>`,
+      ts: `${new Date(date).getTime()}`,
+      // TODO: Labels? CQ status?
+      // fields: [{
 
-          // }]
-        },
-      },
-    });
-    if (unfurl.status !== 200 || !unfurl.ok) {
-      console.error('Failed to unfurl', unfurl);
-    }
-    return true;
+      // }]
+    };
   }
 
-  return false;
+  return null;
 }

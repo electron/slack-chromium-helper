@@ -1,4 +1,4 @@
-import { WebClient } from '@slack/web-api';
+import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
 import { Policy, ConstantBackoff } from 'cockatiel';
@@ -83,14 +83,9 @@ const notNull = <T>(arr: (T | null)[]) => {
   return arr.filter(Boolean) as T[];
 };
 
-export async function handleChromiumBugUnfurl(
-  url: string,
-  message_ts: string,
-  channel: string,
-  client: WebClient,
-) {
+export async function handleChromiumBugUnfurl(url: string): Promise<MessageAttachment | null> {
   const bugIdentifier = parseBugIdentifier(url);
-  if (!bugIdentifier) return false;
+  if (!bugIdentifier) return null;
 
   const headers = await getMonorailHeaders();
   const monorailQuery = JSON.stringify({
@@ -109,73 +104,62 @@ export async function handleChromiumBugUnfurl(
     headers,
     body: monorailQuery,
   });
-  if ((await response).status !== 200) return false;
-  if ((await commentResponse).status !== 200) return false;
+  if ((await response).status !== 200) return null;
+  if ((await commentResponse).status !== 200) return null;
 
   const { issue }: { issue: MonorailIssue } = JSON.parse((await (await response).text()).slice(4));
   const { comments }: { comments: MonorailComments } = JSON.parse(
     (await (await commentResponse).text()).slice(4),
   );
 
-  const unfurl = await client.chat.unfurl({
-    channel,
-    ts: message_ts,
-    unfurls: {
-      [url]: {
-        color: issue.statusRef.meansOpen ? '#36B37E' : '#FF5630',
-        author_name: issue.reporterRef.displayName,
-        // author_icon: owner.avatars && owner.avatars.length ? owner.avatars[owner.avatars.length - 1].url : ':void',
-        author_link: `https://bugs.chromium.org/u/${issue.reporterRef.userId}/`,
-        fallback: `[${issue.projectName}] #${issue.localId} ${issue.summary}`,
-        title: `#${issue.localId} ${issue.summary}`,
-        title_link: url,
-        footer_icon: 'https://bugs.chromium.org/static/images/monorail.ico',
-        text: comments[0].content,
-        footer: `<https://bugs.chromium.org/p/${issue.projectName}|crbug/${issue.projectName}>`,
-        ts: `${issue.openedTimestamp * 1000}`,
-        fields: notNull([
-          issue.componentRefs && issue.componentRefs.length
-            ? {
-                title: 'Components',
-                value: issue.componentRefs
-                  .map(
-                    (ref) =>
-                      `• <https://bugs.chromium.org/p/${
-                        issue.projectName
-                      }/issues/list?q=component%3A${encodeURIComponent(
-                        ref.path,
-                      )}|\`${ref.path.replace(/>/g, '→')}\`>`,
-                  )
-                  .join('\n'),
-                short: true,
-              }
-            : null,
-          issue.labelRefs && issue.labelRefs.length
-            ? {
-                title: 'Labels',
-                value: issue.labelRefs
-                  .map(
-                    (ref) =>
-                      `• <https://bugs.chromium.org/p/${
-                        issue.projectName
-                      }/issues/list?q=label%3A${encodeURIComponent(ref.label)}|\`${ref.label}\`>`,
-                  )
-                  .join('\n'),
-                short: true,
-              }
-            : null,
-          {
-            title: 'Comments',
-            value: `${comments.length}`,
+  return {
+    color: issue.statusRef.meansOpen ? '#36B37E' : '#FF5630',
+    author_name: issue.reporterRef.displayName,
+    author_link: `https://bugs.chromium.org/u/${issue.reporterRef.userId}/`,
+    fallback: `[${issue.projectName}] #${issue.localId} ${issue.summary}`,
+    title: `#${issue.localId} ${issue.summary}`,
+    title_link: url,
+    footer_icon: 'https://bugs.chromium.org/static/images/monorail.ico',
+    text: comments[0].content,
+    footer: `<https://bugs.chromium.org/p/${issue.projectName}|crbug/${issue.projectName}>`,
+    ts: `${issue.openedTimestamp * 1000}`,
+    fields: notNull([
+      issue.componentRefs && issue.componentRefs.length
+        ? {
+            title: 'Components',
+            value: issue.componentRefs
+              .map(
+                (ref) =>
+                  `• <https://bugs.chromium.org/p/${
+                    issue.projectName
+                  }/issues/list?q=component%3A${encodeURIComponent(ref.path)}|\`${ref.path.replace(
+                    />/g,
+                    '→',
+                  )}\`>`,
+              )
+              .join('\n'),
             short: true,
-          },
-        ]),
+          }
+        : null,
+      issue.labelRefs && issue.labelRefs.length
+        ? {
+            title: 'Labels',
+            value: issue.labelRefs
+              .map(
+                (ref) =>
+                  `• <https://bugs.chromium.org/p/${
+                    issue.projectName
+                  }/issues/list?q=label%3A${encodeURIComponent(ref.label)}|\`${ref.label}\`>`,
+              )
+              .join('\n'),
+            short: true,
+          }
+        : null,
+      {
+        title: 'Comments',
+        value: `${comments.length}`,
+        short: true,
       },
-    },
-  });
-  if (unfurl.status !== 200 || !unfurl.ok) {
-    console.error('Failed to unfurl', unfurl);
-  }
-
-  return true;
+    ]),
+  };
 }

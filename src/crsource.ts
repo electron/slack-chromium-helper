@@ -137,15 +137,22 @@ export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAt
   const parsed = new URL(url);
   if (parsed.hostname !== 'source.chromium.org') return null;
 
-  const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)(?:;l=([0-9]+(?:-[0-9]+)?))?/.exec(
+  const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)(?:;l=([0-9]+(?:-[0-9]+)?))?(?:;drc=([a-f0-9]+))?/.exec(
     url,
   );
   if (!match) return null;
 
-  const [, parent, project, projectKey, branch, fileName, lineRange] = match;
+  const [, parent, project, projectKey, branch, fileName, lineRange, hash] = match;
 
   const grimoire = await getGrimoireMetadata();
-  let contents = await getFileContents(grimoire, parent, project, projectKey, branch, fileName);
+  let contents = await getFileContents(
+    grimoire,
+    parent,
+    project,
+    projectKey,
+    hash || branch,
+    fileName,
+  );
   if (lineRange) {
     const start = parseInt(lineRange.split('-')[0], 10);
     if (!isNaN(start)) {

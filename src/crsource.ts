@@ -133,16 +133,41 @@ function removeOverIndent(contents: string): string {
   return lines.map((l) => l.slice(minIndent)).join('\n');
 }
 
-export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAttachment | null> {
+export function parseChromiumSourceURL(url: string) {
   const parsed = new URL(url);
   if (parsed.hostname !== 'source.chromium.org') return null;
 
-  const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)(?:;l=([0-9]+(?:-[0-9]+)?))?(?:;drc=([a-f0-9]+))?/.exec(
+  const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)((?:;[a-z]+=[^;\?]+)+)?(\?(?:[^=]+=[^&]+(?:&|$))+)?/.exec(
     url,
   );
   if (!match) return null;
 
-  const [, parent, project, projectKey, branch, fileName, lineRange, hash] = match;
+  const [, parent, project, projectKey, branch, fileName, sourceParams, _queryParams] = match;
+  const sourceParamMap = new Map();
+  if (sourceParams) {
+    for (const param of sourceParams.split(';')) {
+      if (!param.trim()) continue;
+      const [key, value] = param.split('=');
+      sourceParamMap.set(key, value);
+    }
+  }
+
+  return {
+    parent,
+    project,
+    projectKey,
+    branch,
+    fileName,
+    lineRange: sourceParamMap.get('l'),
+    hash: sourceParamMap.get('drc'),
+  };
+}
+
+export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAttachment | null> {
+  const parsed = parseChromiumSourceURL(url);
+  if (!parsed) return null;
+
+  const { parent, project, projectKey, branch, fileName, lineRange, hash } = parsed;
 
   const grimoire = await getGrimoireMetadata();
   let contents = await getFileContents(

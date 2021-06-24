@@ -12,6 +12,10 @@ The URLs this bot currently supports are:
 * `https://source.chromium.org/chromium/chromium/src/+/master:chrome/app/main_dll_loader_win.cc;l=101`
 * `https://source.chromium.org/chromium/chromium/src/+/master:chrome/app/main_dll_loader_win.cc;l=101-110`
 
+## Installation
+
+<a href="https://chromium-helper.electronjs.org/slack/install"><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+
 ## What does it look like?
 
 ![image](https://user-images.githubusercontent.com/6634592/113898062-5e61ae00-9780-11eb-8df1-e43fa261f66f.png)

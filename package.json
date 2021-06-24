@@ -5,9 +5,10 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@slack/bolt": "^3.3.0",
-    "cockatiel": "^2.0.1",
-    "node-fetch": "^2.6.1"
+    "@slack/bolt": "^3.4.0",
+    "cockatiel": "^2.0.2",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.6.0"
   },
   "scripts": {
     "build": "tsc",
@@ -18,17 +19,18 @@
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
-    "@babel/preset-env": "^7.14.5",
+    "@babel/preset-env": "^7.14.7",
     "@babel/preset-typescript": "^7.14.5",
     "@types/jest": "^26.0.23",
     "@types/node": "^14.14.37",
-    "@types/node-fetch": "^2.5.9",
-    "babel-jest": "^27.0.2",
+    "@types/node-fetch": "^2.5.10",
+    "@types/pg": "^8.6.0",
+    "babel-jest": "^27.0.5",
     "husky": "^6.0.0",
-    "jest": "^27.0.4",
+    "jest": "^27.0.5",
     "lint-staged": "^10.5.4",
-    "prettier": "^2.2.1",
-    "typescript": "^4.2.3"
+    "prettier": "^2.3.1",
+    "typescript": "^4.3.4"
   },
   "lint-staged": {
     "*.ts": "prettier --write"

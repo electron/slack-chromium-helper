@@ -3,14 +3,32 @@ import { App, MessageAttachment } from '@slack/bolt';
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
+import { getInstallation, storeInstallation } from './db';
 import { notNull } from './utils';
 
 const app = new App({
-  authorize: async () => ({
-    botToken: process.env.SLACK_TOKEN,
-    botId: process.env.SLACK_BOT_ID,
-  }),
   signingSecret: process.env.SLACK_SIGNING_SECRET,
+  clientId: process.env.SLACK_CLIENT_ID,
+  clientSecret: process.env.SLACK_CLIENT_SECRET,
+  stateSecret: process.env.SLACK_STATE_SECRET,
+  scopes: ['links:read', 'links:write'],
+  installationStore: {
+    storeInstallation: async (installation) => {
+      await storeInstallation(installation);
+    },
+    fetchInstallation: async (installQuery) => {
+      const install = await getInstallation(
+        installQuery.teamId || null,
+        installQuery.enterpriseId || null,
+      );
+      if (!install) {
+        throw new Error(
+          `Failed to get install for query: ${installQuery.teamId}/${installQuery.enterpriseId}`,
+        );
+      }
+      return install;
+    },
+  },
 });
 
 app.event('link_shared', async ({ client, body }) => {

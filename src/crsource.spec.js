@@ -33,6 +33,24 @@ describe('parseChromiumSourceURL', () => {
     ).toHaveProperty('branch', 'lkgr');
   });
 
+  it('should handle non-src paths', () => {
+    expect(
+      parseChromiumSourceURL(
+        'https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:gclient.py;l=677-686?q=gclient.py&ss=chromium',
+      ),
+    ).toMatchInlineSnapshot(`
+      Object {
+        "branch": "main",
+        "fileName": "gclient.py",
+        "hash": undefined,
+        "lineRange": "677-686",
+        "parent": "chromium",
+        "project": "chromium",
+        "projectKey": "tools/depot_tools",
+      }
+    `);
+  });
+
   it('should handle complex URLs', () => {
     expect(
       parseChromiumSourceURL(

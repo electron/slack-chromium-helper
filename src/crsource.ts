@@ -137,9 +137,10 @@ export function parseChromiumSourceURL(url: string) {
   const parsed = new URL(url);
   if (parsed.hostname !== 'source.chromium.org') return null;
 
-  const match = /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([a-z0-9]+):([^;]+)((?:;[a-z]+=[^;\?]+)+)?(\?(?:[^=]+=[^&]+(?:&|$))+)?/.exec(
-    url,
-  );
+  const match =
+    /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([^+]+)\/\+\/([a-z0-9]+):([^;]+)((?:;[a-z]+=[^;\?]+)+)?(\?(?:[^=]+=[^&]+(?:&|$))+)?/.exec(
+      url,
+    );
   if (!match) return null;
 
   const [, parent, project, projectKey, branch, fileName, sourceParams, _queryParams] = match;

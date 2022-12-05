@@ -39,7 +39,7 @@ describe('parseChromiumSourceURL', () => {
         'https://source.chromium.org/chromium/chromium/tools/depot_tools/+/main:gclient.py;l=677-686?q=gclient.py&ss=chromium',
       ),
     ).toMatchInlineSnapshot(`
-      Object {
+      {
         "branch": "main",
         "fileName": "gclient.py",
         "hash": undefined,
@@ -57,7 +57,7 @@ describe('parseChromiumSourceURL', () => {
         'https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/exported/web_view_impl.cc;l=241-245;drc=8d990c92df3d03ff3d313428f25dd11b7e509bcf?q=SetUseExternalPopupMenus&ss=chromium',
       ),
     ).toMatchInlineSnapshot(`
-      Object {
+      {
         "branch": "main",
         "fileName": "third_party/blink/renderer/core/exported/web_view_impl.cc",
         "hash": "8d990c92df3d03ff3d313428f25dd11b7e509bcf",

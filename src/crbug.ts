@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 
 import { Policy, ConstantBackoff } from 'cockatiel';
 import { notNull } from './utils';
+import { escapeSlackMessage } from './escape';
 
 function parseBugIdentifier(url: string) {
   const parsed = new URL(url);
@@ -117,7 +118,7 @@ export async function handleChromiumBugUnfurl(url: string): Promise<MessageAttac
     title: `#${issue.localId} ${issue.summary}`,
     title_link: url,
     footer_icon: 'https://bugs.chromium.org/static/images/monorail.ico',
-    text: comments[0].content,
+    text: escapeSlackMessage(comments[0].content),
     footer: `<https://bugs.chromium.org/p/${issue.projectName}|crbug/${issue.projectName}>`,
     ts: `${issue.openedTimestamp * 1000}`,
     fields: notNull([

@@ -27,13 +27,22 @@ async function createTableSchema() {
   )`);
 }
 
-let ready = false;
-async function ensureDBInitialized() {
-  if (ready) return;
+const once = (fn: () => Promise<void>) => {
+  let singleton: Promise<void> | null = null;
+
+  return async () => {
+    if (!singleton) {
+      singleton = fn();
+    }
+
+    return await singleton;
+  };
+};
+
+const ensureDBInitialized = once(async function () {
   await client.connect();
   await createTableSchema();
-  ready = true;
-}
+});
 
 export async function getInstallation(teamId: string | null, enterpriseId: string | null) {
   await ensureDBInitialized();

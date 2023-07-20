@@ -65,7 +65,9 @@ async function getFileContents(
       method: 'POST',
     },
   );
-  const data: DeepArrayOfUnknowns = JSON.parse(await response.text());
+  const text = await response.text();
+  console.log(text);
+  const data: DeepArrayOfUnknowns = JSON.parse(text);
 
   const best = { str: '', n: 0 };
 

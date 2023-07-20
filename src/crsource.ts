@@ -37,7 +37,7 @@ async function getFileContents(
   fileName: string,
 ) {
   const response = await fetch(
-    `${grimoire.endpoint}/$rpc/devtools.grimoire.FileService/GetContentsStreaming?%24httpHeaders=X-Goog-Api-Key%3A${grimoire.token}%0D%0AX-Goog-Api-Client%3Agrpc-web%2F1.0.0%20grimoire%2F1.0.0%2Buyti2atju1zl.be6of0mawakc.code.codebrowser-frontend-oss-20210330.07_p0%0D%0AX-Server-Timeout%3A60%0D%0AContent-Type%3Aapplication%2Fjson%2Bprotobuf%0D%0AX-User-Agent%3Agrpc-web-javascript%2F0.1%0D%0A`,
+    `${grimoire.endpoint}/$rpc/devtools.grimoire.FileService/GetContentsStreaming?%24httpHeaders=X-Goog-Api-Key%3A${grimoire.token}%0D%0AX-Goog-Api-Client%3Agrpc-web%2F1.0.0%20grimoire%2F1.0.0%2B2h2zzoi4wx9u.164dhqa47qy6.code.codebrowser-frontend-20230706.06_p0%0D%0AX-Server-Timeout%3A60%0D%0AContent-Type%3Aapplication%2Fjson%2Bprotobuf%0D%0AX-User-Agent%3Agrpc-web-javascript%2F0.1%0D%0A`,
     {
       headers: {
         origin: 'https://source.chromium.org',
@@ -45,7 +45,7 @@ async function getFileContents(
       },
       body: JSON.stringify([
         [
-          [[null, `${project}/${projectKey}`, null, null, parent], null, branch],
+          [[null, `${project}/${projectKey}`, null, null, parent], null, branch, branch],
           fileName,
           null,
           null,

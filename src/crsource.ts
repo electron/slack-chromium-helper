@@ -36,36 +36,37 @@ async function getFileContents(
   branch: string,
   fileName: string,
 ) {
-  const response = await fetch(
-    `${grimoire.endpoint}/$rpc/devtools.grimoire.FileService/GetContentsStreaming?%24httpHeaders=X-Goog-Api-Key%3A${grimoire.token}%0D%0AX-Goog-Api-Client%3Agrpc-web%2F1.0.0%20grimoire%2F1.0.0%2B2h2zzoi4wx9u.164dhqa47qy6.code.codebrowser-frontend-20230706.06_p0%0D%0AX-Server-Timeout%3A60%0D%0AContent-Type%3Aapplication%2Fjson%2Bprotobuf%0D%0AX-User-Agent%3Agrpc-web-javascript%2F0.1%0D%0A`,
-    {
-      headers: {
-        origin: 'https://source.chromium.org',
-        'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
-      },
-      body: JSON.stringify([
-        [
-          [[null, `${project}/${projectKey}`, null, null, parent], null, branch, branch],
-          fileName,
-          null,
-          null,
-          null,
-          null,
-          [],
-        ],
-        true,
-        null,
-        true,
-        null,
-        null,
-        null,
-        null,
-        true,
-      ]),
-      method: 'POST',
+  const grimoireUrl = `${grimoire.endpoint}/$rpc/devtools.grimoire.FileService/GetContentsStreaming?%24httpHeaders=X-Goog-Api-Key%3A${grimoire.token}%0D%0AX-Goog-Api-Client%3Agrpc-web%2F1.0.0%20grimoire%2F1.0.0%2B2h2zzoi4wx9u.164dhqa47qy6.code.codebrowser-frontend-20230706.06_p0%0D%0AX-Server-Timeout%3A60%0D%0AContent-Type%3Aapplication%2Fjson%2Bprotobuf%0D%0AX-User-Agent%3Agrpc-web-javascript%2F0.1%0D%0A`;
+  const grimoireRequestPayload = [
+    [
+      [[null, `${project}/${projectKey}`, null, null, parent], null, branch, branch],
+      fileName,
+      null,
+      null,
+      null,
+      null,
+      [],
+    ],
+    true,
+    null,
+    true,
+    null,
+    null,
+    null,
+    null,
+    true,
+  ];
+  const response = await fetch(grimoireUrl, {
+    headers: {
+      origin: 'https://source.chromium.org',
+      'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
     },
-  );
+    body: JSON.stringify(grimoireRequestPayload),
+    method: 'POST',
+  });
   const text = await response.text();
+  console.log(grimoireUrl);
+  console.log(grimoireRequestPayload);
   console.log(text);
   const data: DeepArrayOfUnknowns = JSON.parse(text);
 

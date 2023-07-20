@@ -15,6 +15,7 @@ async function getGrimoireMetadata(): Promise<GrimoireMeta> {
       .replace(/\\x([\d\w]{2})/gi, (match, grp) => {
         return String.fromCharCode(parseInt(grp, 16));
       })
+      .replace(/\\u003d\\\\"([^"]+)\\\\"/g, '\\u003d\\"$1\\"')
       .replace(/\\n/gi, ''),
   );
   const token: string = grimoireConfig[0];

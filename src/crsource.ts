@@ -65,9 +65,10 @@ async function getFileContents(
     method: 'POST',
   });
   const text = await response.text();
-  console.log(grimoireUrl);
-  console.log(grimoireRequestPayload);
-  console.log(text);
+  if (text === '[,[5,"Requested entity was not found."]]') {
+    return null;
+  }
+
   const data: DeepArrayOfUnknowns = JSON.parse(text);
 
   const best = { str: '', n: 0 };
@@ -183,6 +184,8 @@ export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAt
     hash || branch,
     fileName,
   );
+  if (!contents) return null;
+
   if (lineRange) {
     const start = parseInt(lineRange.split('-')[0], 10);
     if (!isNaN(start)) {

@@ -1,6 +1,8 @@
 export const escapeSlackMessage = (text: string): string => {
   // Naively attempt to replace bold tags with Slack syntax
   text = text.replace(/<b>/g, '*').replace(/<\/b>/g, '*');
+  // Try and replace markdown bold syntax with slack bold syntax
+  text = text.replace(/\*\*([^\*]+)\*\*/g, '*$1*');
   // Some stack traces include "*.mm" which is a recognized domain in slack
   // but we don't want to linkify
   text = text.replace(/([a-z])\.mm([^a-z]|$)/g, '$1&period;mm$2');

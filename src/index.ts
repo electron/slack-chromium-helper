@@ -5,6 +5,7 @@ import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
 import { getInstallation, storeInstallation } from './db';
 import { notNull } from './utils';
+import { handleChromiumIssueUnfurl } from './crissue';
 
 const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -46,6 +47,7 @@ app.event('link_shared', async ({ client, body }) => {
         handleChromiumReviewUnfurl(url),
         handleChromiumBugUnfurl(url),
         handleChromiumSourceUnfurl(url),
+        handleChromiumIssueUnfurl(url),
       ]);
       const validUnfurls = notNull(unfurls);
       if (validUnfurls.length > 1) {

@@ -178,7 +178,7 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     fallback: escapeSlackMessage(`[${issueIdentifier.issueTracker}] #${issueNumber} ${issueTitle}`),
     title: escapeSlackMessage(`#${issueNumber} ${issueTitle}`),
     title_link: `https://${issueIdentifier.issuesHost}/issues/${issueNumber}`,
-    footer_icon: 'https://www.gstatic.com/chrome-tracker/img/chromium.svg',
+    footer_icon: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Chromium_logo.png',
     text: firstComment ? escapeSlackMessage(firstComment[0]) : 'Unknown',
     footer: `<https://issues.chromium.org|${issueIdentifier.issueTracker} Issue Tracker>`,
     ts: `${Math.floor(unixCreated / 1000 / 1000)}`,

@@ -1,8 +1,6 @@
 import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
-import { Policy, ConstantBackoff } from 'cockatiel';
-import { notNull } from './utils';
 import { escapeSlackMessage } from './escape';
 
 enum IssueStatus {
@@ -32,20 +30,20 @@ const humanFriendlyIssueStatus: Record<IssueStatus, string> = {
   [IssueStatus.DUPLICATE]: 'Duplicate',
 };
 const issueTypes = [
-  ['BUG', 'Unintended behavior'],
-  ['FEATURE_REQUEST', 'Request for new functionality'],
-  ['CUSTOMER_ISSUE', 'Issue affecting a 3rd party'],
-  ['INTERNAL_CLEANUP', 'Maintenance work'],
-  ['PROCESS', 'Miscellaneous non-feature work'],
-  ['VULNERABILITY', 'A security concern'],
-  ['PRIVACY_ISSUE', 'A privacy concern'],
-  ['PROJECT', 'Goal-driven effort'],
-  ['FEATURE', 'A collection of work'],
-  ['MILESTONE', 'An important achievement'],
-  ['EPIC', 'A large collection of work'],
-  ['STORY', 'A small collection of work'],
-  ['TASK', 'A small unit of work'],
-  ['TYPE_UNSPECIFIED', 'Unspecified'],
+  ['Bug', 'Unintended behavior'],
+  ['Feature Request', 'Request for new functionality'],
+  ['Customer Issue', 'Issue affecting a 3rd party'],
+  ['Internal Cleanup', 'Maintenance work'],
+  ['Process', 'Miscellaneous non-feature work'],
+  ['Vulnerability', 'A security concern'],
+  ['Privacy Issue', 'A privacy concern'],
+  ['Project', 'Goal-driven effort'],
+  ['Feature', 'A collection of work'],
+  ['Milestone', 'An important achievement'],
+  ['Epic', 'A large collection of work'],
+  ['Story', 'A small collection of work'],
+  ['Task', 'A small unit of work'],
+  ['Unspecified', 'Unspecified'],
 ];
 
 const parseIssueIdentifier = (url: string) => {
@@ -164,8 +162,6 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     firstComment = commentsData[0][2][0][0];
   }
 
-  console.log(JSON.stringify(moreIssueDetails, null, 2));
-
   return {
     color: ![
       IssueStatus.FIXED,
@@ -177,12 +173,12 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     ].includes(issueStatus)
       ? '#36B37E'
       : '#FF5630',
-    author_name: issueOpenerData[1],
+    author_name: escapeSlackMessage(issueOpenerData[1]),
     // author_link: `https://bugs.chromium.org/u/${issue.reporterRef.userId}/`,
-    fallback: `[${issueIdentifier.issueTracker}] #${issueNumber} ${issueTitle}`,
-    title: `#${issueNumber} ${issueTitle}`,
+    fallback: escapeSlackMessage(`[${issueIdentifier.issueTracker}] #${issueNumber} ${issueTitle}`),
+    title: escapeSlackMessage(`#${issueNumber} ${issueTitle}`),
     title_link: `https://${issueIdentifier.issuesHost}/issues/${issueNumber}`,
-    footer_icon: 'https://bugs.chromium.org/static/images/monorail.ico',
+    footer_icon: 'https://www.gstatic.com/chrome-tracker/img/chromium.svg',
     text: firstComment ? escapeSlackMessage(firstComment[0]) : 'Unknown',
     footer: `<https://issues.chromium.org|${issueIdentifier.issueTracker} Issue Tracker>`,
     ts: `${Math.floor(unixCreated / 1000 / 1000)}`,
@@ -248,6 +244,3 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     // ]),
   };
 }
-
-// handleChromiumIssueUnfurl('https://issues.chromium.org/issues/324057537');
-handleChromiumIssueUnfurl('https://issues.chromium.org/issues/40710006').then(console.info);

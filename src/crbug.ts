@@ -37,7 +37,7 @@ const retry = Policy.handleAll().retry().attempts(3).backoff(new ConstantBackoff
 
 async function getMonorailToken() {
   return retry.execute(async () => {
-    const url = 'https://bugs.chromium.org/p/chromium';
+    const url = 'https://bugs.chromium.org/p/chromium?no_tracker_redirect=true';
     const result = await fetch(url);
     const text = await result.text();
     const rgxResult = /.*'token': '([\w\d_-]*)',.*/gi.exec(text);

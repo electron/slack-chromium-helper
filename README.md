@@ -8,9 +8,9 @@ The URLs this bot currently supports are:
 * `https://crbug.com/12345`
 * `https://bugs.chromium.org/p/chromium/issues/detail?id=12345`
 * `https://chromium-review.googlesource.com/c/chromium/src/+/123456`
-* `https://source.chromium.org/chromium/chromium/src/+/master:chrome/app/main_dll_loader_win.cc`
-* `https://source.chromium.org/chromium/chromium/src/+/master:chrome/app/main_dll_loader_win.cc;l=101`
-* `https://source.chromium.org/chromium/chromium/src/+/master:chrome/app/main_dll_loader_win.cc;l=101-110`
+* `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc`
+* `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc;l=101`
+* `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc;l=101-110`
 
 ## Installation
 

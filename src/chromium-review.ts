@@ -2,9 +2,10 @@ import { MessageAttachment } from '@slack/bolt';
 import fetch from 'node-fetch';
 
 export async function handleChromiumReviewUnfurl(url: string): Promise<MessageAttachment | null> {
-  const match = /^https:\/\/chromium-review\.googlesource\.com\/c\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([0-9]+)/g.exec(
-    url,
-  );
+  const match =
+    /^https:\/\/chromium-review\.googlesource\.com\/c\/([a-z0-9]+)\/([a-z0-9]+)\/\+\/([0-9]+)/g.exec(
+      url,
+    );
   if (!match) return null;
 
   const repo = `${match[1]}%2F${match[2]}`;

@@ -1,5 +1,4 @@
 import { MessageAttachment } from '@slack/bolt';
-import fetch from 'node-fetch';
 
 import { Policy, ConstantBackoff } from 'cockatiel';
 import { notNull } from './utils';

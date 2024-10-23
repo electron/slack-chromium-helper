@@ -1,5 +1,4 @@
 import { MessageAttachment } from '@slack/bolt';
-import fetch from 'node-fetch';
 
 import { escapeSlackMessage } from './escape';
 

@@ -17,7 +17,8 @@
     "start": "node dist/index.js",
     "prepare": "husky install",
     "prettier:check": "prettier --check \"src/**/*.ts\"",
-    "prettier:write": "prettier --write \"src/**/*.ts\""
+    "prettier:write": "prettier --write \"src/**/*.ts\"",
+    "test": "jest"
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",

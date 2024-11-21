@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseChromiumSourceURL } from './crsource';
+import { parseChromiumSourceURL } from '../src/crsource';
 
 describe('parseChromiumSourceURL', () => {
   it('should handle direct file URLs', () => {

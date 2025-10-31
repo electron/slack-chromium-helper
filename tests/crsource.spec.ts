@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseChromiumSourceURL } from '../src/crsource';
+import { parseChromiumSourceURL, handleChromiumSourceUnfurl } from '../src/crsource';
 
 describe('parseChromiumSourceURL', () => {
   it('should handle direct file URLs', () => {
@@ -67,6 +67,24 @@ describe('parseChromiumSourceURL', () => {
         "parent": "chromium",
         "project": "chromium",
         "projectKey": "src",
+      }
+    `);
+  });
+
+  it('should handle build repo URLs', () => {
+    expect(
+      parseChromiumSourceURL(
+        'https://source.chromium.org/chromium/build/+/main:siso/build/ninjabuild/step_def.go;l=500?q=%22failed%20to%20lookup%20deps%20log%22&ss=chromium',
+      ),
+    ).toMatchInlineSnapshot(`
+      {
+        "branch": "main",
+        "fileName": "siso/build/ninjabuild/step_def.go",
+        "hash": undefined,
+        "lineRange": "500",
+        "parent": "chromium",
+        "project": "build",
+        "projectKey": "",
       }
     `);
   });

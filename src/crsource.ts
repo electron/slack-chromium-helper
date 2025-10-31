@@ -143,12 +143,12 @@ export function parseChromiumSourceURL(url: string) {
   if (parsed.hostname !== 'source.chromium.org') return null;
 
   const match =
-    /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/([^+]+)\/\+\/([a-z0-9]+):([^;]+)((?:;[a-z]+=[^;\?]+)+)?(\?(?:[^=]+=[^&]+(?:&|$))+)?/.exec(
+    /^https:\/\/source\.chromium\.org\/([a-z0-9]+)\/([a-z0-9]+)\/(?:([^+]+)\/)??\+\/([a-z0-9]+):([^;]+)((?:;[a-z]+=[^;\?]+)+)?(\?(?:[^=]+=[^&]+(?:&|$))+)?/.exec(
       url,
     );
   if (!match) return null;
 
-  const [, parent, project, projectKey, branch, fileName, sourceParams, _queryParams] = match;
+  const [, parent, project, projectKey = '', branch, fileName, sourceParams, _queryParams] = match;
   const sourceParamMap = new Map();
   if (sourceParams) {
     for (const param of sourceParams.split(';')) {

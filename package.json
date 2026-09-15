@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@slack/bolt": "^3.4.0",
-    "cockatiel": "^2.0.2",
     "pg": "^8.6.0"
   },
   "scripts": {

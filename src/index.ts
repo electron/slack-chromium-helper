@@ -1,4 +1,5 @@
-import { App, MessageAttachment } from '@slack/bolt';
+import { App } from '@slack/bolt';
+import { MessageAttachment } from '@slack/types';
 
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';

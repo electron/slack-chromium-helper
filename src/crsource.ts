@@ -1,4 +1,4 @@
-import { MessageAttachment } from '@slack/bolt';
+import { MessageAttachment } from '@slack/types';
 
 type GrimoireMeta = {
   token: string;

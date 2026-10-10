@@ -5,12 +5,14 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=20.17"
+    "node": ">=20.18.1"
   },
   "dependencies": {
-    "@slack/bolt": "^3.4.0",
+    "@slack/bolt": "^5.1.0",
+    "@slack/types": "^3.2.0",
     "cockatiel": "^2.0.2",
-    "pg": "^8.6.0"
+    "pg": "^8.6.0",
+    "undici": "^7.30.0"
   },
   "scripts": {
     "build": "tsc",
@@ -21,6 +23,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.7.9",
     "@types/pg": "^8.6.0",
     "husky": "^9.1.6",

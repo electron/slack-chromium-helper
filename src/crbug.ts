@@ -1,4 +1,4 @@
-import { MessageAttachment } from '@slack/bolt';
+import { MessageAttachment } from '@slack/types';
 
 import { Policy, ConstantBackoff } from 'cockatiel';
 import { notNull } from './utils';

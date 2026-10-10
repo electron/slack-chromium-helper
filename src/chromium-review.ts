@@ -1,4 +1,4 @@
-import { MessageAttachment } from '@slack/types';
+import type { MessageAttachment } from '@slack/types';
 
 export async function handleChromiumReviewUnfurl(url: string): Promise<MessageAttachment | null> {
   const match =

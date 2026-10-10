@@ -12,7 +12,6 @@ __metadata:
     "@slack/bolt": "npm:^3.4.0"
     "@types/node": "npm:^22.7.9"
     "@types/pg": "npm:^8.6.0"
-    cockatiel: "npm:^2.0.2"
     husky: "npm:^9.1.6"
     lint-staged: "npm:^16.2.7"
     pg: "npm:^8.6.0"
@@ -792,13 +791,6 @@ __metadata:
     slice-ansi: "npm:^7.1.0"
     string-width: "npm:^8.0.0"
   checksum: 10c0/3842920829a62f3e041ce39199050c42706c3c9c756a4efc8b86d464e102d1fa031d8b1b9b2e3bb36e1017c763558275472d031bdc884c1eff22a2f20e4f6b0a
-  languageName: node
-  linkType: hard
-
-"cockatiel@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "cockatiel@npm:2.0.2"
-  checksum: 10c0/d20d29148f33e989a8043b802912fdaf3532324411ca222312ea4b9612de280d5eca3547a4900fac4f2f1a495f2f38be77c559c279cbdb45a5491a08f520e116
   languageName: node
   linkType: hard
 

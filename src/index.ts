@@ -1,11 +1,11 @@
-import { App, MessageAttachment } from '@slack/bolt';
+import { App } from '@slack/bolt';
 
 import { handleChromiumReviewUnfurl } from './chromium-review';
 import { handleChromiumBugUnfurl } from './crbug';
 import { handleChromiumSourceUnfurl } from './crsource';
 import { getInstallation, storeInstallation } from './db';
-import { notNull } from './utils';
 import { handleChromiumIssueUnfurl } from './crissue';
+import { createLinkSharedHandler } from './link-shared';
 
 const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
@@ -32,42 +32,23 @@ const app = new App({
   },
 });
 
-app.event('link_shared', async ({ client, body }) => {
-  const { message_ts, channel, links } = body.event;
-
-  // Do not unfurl if there are more than three links, we're nice like that
-  if (links.length > 3) return;
-
-  const linkUnfurls: Record<string, MessageAttachment> = {};
-
-  // Unfurl all the links at the same time
-  await Promise.all(
-    links.map(async ({ url }) => {
-      const unfurls = await Promise.all([
-        handleChromiumReviewUnfurl(url),
-        handleChromiumBugUnfurl(url),
-        handleChromiumSourceUnfurl(url),
-        handleChromiumIssueUnfurl(url),
-      ]);
-      const validUnfurls = notNull(unfurls);
-      if (validUnfurls.length > 1) {
-        console.error('More than one unfurler responded to a given URL', { url });
-      } else if (validUnfurls.length === 1) {
-        linkUnfurls[url] = validUnfurls[0];
-      }
-    }),
-  );
-
-  const unfurl = await client.chat.unfurl({
-    channel,
-    ts: message_ts,
-    unfurls: linkUnfurls,
-  });
-
-  if (!unfurl.ok) {
-    console.error('Failed to unfurl', { unfurl, linkUnfurls });
-  }
+// Bolt's default error handler rethrows, and the HTTP receiver then tries to
+// write a 500 on a response that was already acked with a 200. That surfaces as
+// an uncaught ERR_HTTP_HEADERS_SENT and takes the whole process down, so log
+// and move on instead.
+app.error(async (error) => {
+  console.error('Unhandled error while processing a Slack event', error);
 });
+
+app.event(
+  'link_shared',
+  createLinkSharedHandler([
+    handleChromiumReviewUnfurl,
+    handleChromiumBugUnfurl,
+    handleChromiumSourceUnfurl,
+    handleChromiumIssueUnfurl,
+  ]),
+);
 
 app.start(process.env.PORT ? parseInt(process.env.PORT, 10) : 8080).then((server) => {
   console.log('Chromium Unfurler listening...');

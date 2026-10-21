@@ -1,4 +1,4 @@
-import { MessageAttachment } from '@slack/bolt';
+import type { MessageAttachment } from '@slack/types';
 
 import { escapeSlackMessage } from './escape';
 

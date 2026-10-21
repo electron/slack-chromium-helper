@@ -5,25 +5,31 @@ type GrimoireMeta = {
   endpoint: string;
 };
 
-async function getGrimoireMetadata(): Promise<GrimoireMeta> {
+async function getGrimoireMetadata(): Promise<GrimoireMeta | null> {
   const response = await fetch('https://source.chromium.org/');
+  if (!response.ok) return null;
   const text = await response.text();
-  const data = text.split("var GRIMOIRE_CONFIG = '")[1].split(`'`)[0];
-  const grimoireConfig = JSON.parse(
-    data
-      .replace(/\\x([\d\w]{2})/gi, (match, grp) => {
-        return String.fromCharCode(parseInt(grp, 16));
-      })
-      .replace(/\\u003d\\\\"([^"]+)\\\\"/g, '\\u003d\\"$1\\"')
-      .replace(/\\\\"/g, '\\\\\\"')
-      .replace(/\\n/gi, ''),
-  );
-  const token: string = grimoireConfig[0];
-  const endpoint: string = grimoireConfig[6][1];
-  return {
-    token,
-    endpoint,
-  };
+  try {
+    const data = text.split("var GRIMOIRE_CONFIG = '")[1].split(`'`)[0];
+    const grimoireConfig = JSON.parse(
+      data
+        .replace(/\\x([\d\w]{2})/gi, (match, grp) => {
+          return String.fromCharCode(parseInt(grp, 16));
+        })
+        .replace(/\\u003d\\\\"([^"]+)\\\\"/g, '\\u003d\\"$1\\"')
+        .replace(/\\\\"/g, '\\\\\\"')
+        .replace(/\\n/gi, ''),
+    );
+    const token: string = grimoireConfig[0];
+    const endpoint: string = grimoireConfig[6][1];
+    return {
+      token,
+      endpoint,
+    };
+  } catch (error) {
+    console.error('Failed to extract Grimoire config from source.chromium.org', { error });
+    return null;
+  }
 }
 
 type DeepArrayOfUnknowns = Array<unknown | string | DeepArrayOfUnknowns>;
@@ -64,12 +70,19 @@ async function getFileContents(
     body: JSON.stringify(grimoireRequestPayload),
     method: 'POST',
   });
+  if (!response.ok) return null;
   const text = await response.text();
   if (text === '[,[5,"Requested entity was not found."]]') {
     return null;
   }
 
-  const data: DeepArrayOfUnknowns = JSON.parse(text);
+  let data: DeepArrayOfUnknowns;
+  try {
+    data = JSON.parse(text);
+  } catch (error) {
+    console.error('Failed to parse source.chromium.org file contents', { fileName, error });
+    return null;
+  }
 
   const best = { str: '', n: 0 };
 
@@ -176,6 +189,7 @@ export async function handleChromiumSourceUnfurl(url: string): Promise<MessageAt
   const { parent, project, projectKey, branch, fileName, lineRange, hash } = parsed;
 
   const grimoire = await getGrimoireMetadata();
+  if (!grimoire) return null;
   let contents = await getFileContents(
     grimoire,
     parent,

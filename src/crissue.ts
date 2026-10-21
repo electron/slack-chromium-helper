@@ -62,6 +62,37 @@ const parseIssueIdentifier = (url: string) => {
   return null;
 };
 
+// issues.chromium.org prefixes its JSON payloads with `)]}'` as an XSSI guard
+const XSSI_PREFIX_LENGTH = 4;
+
+function parseXssiGuardedJson(text: string): unknown {
+  return JSON.parse(text.slice(XSSI_PREFIX_LENGTH).trim());
+}
+
+/**
+ * Parses the body of an issues list request down to the array of matched
+ * issues. Returns null for anything that does not look like a search
+ * response with at least one result; notably restricted (e.g. security)
+ * issues answer with `null` in place of the results array.
+ */
+export function parseIssueSearchResponse(text: string): unknown[] | null {
+  let parsed: unknown;
+  try {
+    parsed = parseXssiGuardedJson(text);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed)) return null;
+
+  const [issueData] = parsed;
+  if (!Array.isArray(issueData) || issueData[0] !== 'b.IssueSearchResponse') return null;
+
+  const results = issueData[1];
+  if (!Array.isArray(results) || results.length === 0) return null;
+
+  return results;
+}
+
 export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAttachment | null> {
   const issueIdentifier = parseIssueIdentifier(url);
   if (!issueIdentifier) return null;
@@ -73,17 +104,20 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     },
     body: JSON.stringify([`id:${issueIdentifier.issueNumber}`, 250, 'modified_time:desc']),
   });
-  const resp = await r.text();
-  const [issueData] = JSON.parse(resp.slice(4).trim());
+  if (!r.ok) return null;
 
-  if (issueData[0] !== 'b.IssueSearchResponse') return null;
+  const results = parseIssueSearchResponse(await r.text());
+  if (!results) return null;
+
+  const [issue] = results as any[];
+  if (!Array.isArray(issue)) return null;
 
   // The following extraction names are Just Good Guesses
   const [
     issueNumber,
     ,
     respType,
-    [_booleanUnknown, unixCreated, unixUpdated, , , , , , , userInfo],
+    issueMeta,
     _nullishUnknown,
     _fieldsIds,
     _unixUpdated,
@@ -103,7 +137,11 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     ,
     issueDetails,
     moreIssueDetails,
-  ] = issueData[1][0];
+  ] = issue;
+
+  const [_booleanUnknown, unixCreated, unixUpdated, , , , , , , userInfo] = issueMeta ?? [];
+
+  if (!Array.isArray(issueDetails)) return null;
 
   const [
     _idMaybe,
@@ -125,9 +163,9 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
   ] = issueDetails;
 
   const fields = [];
-  for (const value of issueFieldValues) {
-    const fieldId = value[0];
-    const meta = fieldMeta.find((m: any) => m[13][0] === fieldId)?.[13];
+  for (const value of issueFieldValues ?? []) {
+    const fieldId = value?.[0];
+    const meta = (fieldMeta ?? []).find((m: any) => m?.[13]?.[0] === fieldId)?.[13];
     if (!meta) continue;
 
     fields.push({
@@ -153,12 +191,18 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     ]),
     method: 'POST',
   });
-  const commentsData = JSON.parse((await commentsResp.text()).slice(4).trim());
 
   let firstComment: any = null;
 
-  if (commentsData[0][0] === 'b.BatchGetIssueCommentsResponse') {
-    firstComment = commentsData[0][2][0][0];
+  if (commentsResp.ok) {
+    try {
+      const commentsData: any = parseXssiGuardedJson(await commentsResp.text());
+      if (commentsData?.[0]?.[0] === 'b.BatchGetIssueCommentsResponse') {
+        firstComment = commentsData[0][2]?.[0]?.[0] ?? null;
+      }
+    } catch (error) {
+      console.error('Failed to parse issue comments', { url, error });
+    }
   }
 
   return {
@@ -172,24 +216,24 @@ export async function handleChromiumIssueUnfurl(url: string): Promise<MessageAtt
     ].includes(issueStatus)
       ? '#36B37E'
       : '#FF5630',
-    author_name: escapeSlackMessage(issueOpenerData[1]),
+    author_name: escapeSlackMessage(issueOpenerData?.[1] ?? 'Unknown'),
     // author_link: `https://bugs.chromium.org/u/${issue.reporterRef.userId}/`,
     fallback: escapeSlackMessage(`[${issueIdentifier.issueTracker}] #${issueNumber} ${issueTitle}`),
     title: escapeSlackMessage(`#${issueNumber} ${issueTitle}`),
     title_link: `https://${issueIdentifier.issuesHost}/issues/${issueNumber}`,
     footer_icon: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Chromium_logo.png',
-    text: firstComment ? escapeSlackMessage(firstComment[0]) : 'Unknown',
+    text: typeof firstComment?.[0] === 'string' ? escapeSlackMessage(firstComment[0]) : 'Unknown',
     footer: `<https://issues.chromium.org|${issueIdentifier.issueTracker} Issue Tracker>`,
     ts: `${Math.floor(unixCreated / 1000 / 1000)}`,
     fields: [
       {
         title: 'Type',
-        value: issueTypes[issueType - 1][0],
+        value: issueTypes[issueType - 1]?.[0] ?? 'Unknown',
         short: true,
       },
       {
         title: 'Status',
-        value: humanFriendlyIssueStatus[issueStatus as IssueStatus],
+        value: humanFriendlyIssueStatus[issueStatus as IssueStatus] ?? 'Unknown',
         short: true,
       },
       {

@@ -14,7 +14,6 @@ __metadata:
     "@types/express": "npm:^5.0.0"
     "@types/node": "npm:^22.7.9"
     "@types/pg": "npm:^8.6.0"
-    cockatiel: "npm:^2.0.2"
     husky: "npm:^9.1.6"
     lint-staged: "npm:17.4.1"
     pg: "npm:^8.6.0"
@@ -637,13 +636,6 @@ __metadata:
   version: 6.2.2
   resolution: "chai@npm:6.2.2"
   checksum: 10c0/e6c69e5f0c11dffe6ea13d0290936ebb68fcc1ad688b8e952e131df6a6d5797d5e860bc55cef1aca2e950c3e1f96daf79e9d5a70fb7dbaab4e46355e2635ed53
-  languageName: node
-  linkType: hard
-
-"cockatiel@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "cockatiel@npm:2.0.2"
-  checksum: 10c0/d20d29148f33e989a8043b802912fdaf3532324411ca222312ea4b9612de280d5eca3547a4900fac4f2f1a495f2f38be77c559c279cbdb45a5491a08f520e116
   languageName: node
   linkType: hard
 

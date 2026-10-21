@@ -7,10 +7,13 @@ This bot, when deployed as a Heroku app, will unfurl Chromium related URLs to pr
 The URLs this bot currently supports are:
 * `https://crbug.com/12345`
 * `https://bugs.chromium.org/p/chromium/issues/detail?id=12345`
+* `https://issues.chromium.org/issues/40286415`
 * `https://chromium-review.googlesource.com/c/chromium/src/+/123456`
 * `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc`
 * `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc;l=101`
 * `https://source.chromium.org/chromium/chromium/src/+/main:chrome/app/main_dll_loader_win.cc;l=101-110`
+
+Legacy `crbug.com` / `bugs.chromium.org` links are resolved via crbug.com's redirect to the new issue tracker (`issues.chromium.org`) and unfurled from there.
 
 ## Installation
 

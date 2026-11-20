@@ -13,8 +13,15 @@ export async function handleChromiumReviewUnfurl(url: string): Promise<MessageAt
 
   const detailsUrl = `https://chromium-review.googlesource.com/changes/${repo}~${cl}/detail?O=916314`;
   const detailsResponse = await fetch(detailsUrl);
+  if (!detailsResponse.ok) return null;
   const detailsText = await detailsResponse.text();
-  const details = JSON.parse(detailsText.substr(4));
+  let details: any;
+  try {
+    details = JSON.parse(detailsText.substr(4));
+  } catch (error) {
+    console.error('Failed to parse chromium-review response', { url, error });
+    return null;
+  }
   const { project, subject, owner, labels, current_revision, revisions } = details;
   const commit = revisions[current_revision].commit;
   const {
